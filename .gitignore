@@ -1,0 +1,14 @@
+# Environment and caches
+vlm_venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Data (large, and licensed for non-commercial use)
+data/raw/
+
+# Trained model weights (large; we'll move these through AWS storage later)
+outputs/checkpoints/
+
+# Secrets (we'll need this once AWS keys exist)
+.env

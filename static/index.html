@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Skin Lesion Classifier (Research Demo)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; color: #1f2933; }
+    h1 { font-size: 1.5rem; margin-bottom: .25rem; }
+    .banner { background: #fff4e5; border: 1px solid #f0b866; border-radius: 8px; padding: .75rem 1rem; font-size: .9rem; margin: 1rem 0; }
+    .row { display: flex; gap: .75rem; align-items: center; margin: 1rem 0; flex-wrap: wrap; }
+    button { background: #2563eb; color: white; border: 0; border-radius: 6px; padding: .6rem 1.2rem; font-size: 1rem; cursor: pointer; }
+    button:disabled { background: #9ca3af; cursor: not-allowed; }
+    #preview { max-width: 100%; max-height: 320px; border-radius: 8px; display: none; margin-bottom: 1rem; }
+    #status { color: #52606d; min-height: 1.5rem; }
+    #error { color: #b91c1c; }
+    .top { font-size: 1.2rem; font-weight: 600; margin: 1rem 0 .5rem; }
+    .bar-row { display: grid; grid-template-columns: 220px 1fr 55px; gap: .5rem; align-items: center; font-size: .9rem; margin: .3rem 0; }
+    .bar-track { background: #e5e7eb; border-radius: 4px; height: 12px; }
+    .bar-fill { background: #2563eb; height: 12px; border-radius: 4px; }
+    .small { font-size: .8rem; color: #52606d; margin-top: 1.5rem; }
+  </style>
+</head>
+<body>
+  <h1>Skin Lesion Classifier</h1>
+  <div class="banner">
+    <strong>Research and educational demo only.</strong> This is not a medical device and does not
+    provide a diagnosis. Do not use it to make health decisions. See a qualified clinician about any skin concern.
+  </div>
+
+  <div class="row">
+    <input type="file" id="file" accept="image/jpeg,image/png">
+    <button id="go">Analyze</button>
+  </div>
+
+  <img id="preview" alt="Selected image preview">
+  <div id="status"></div>
+  <div id="error"></div>
+  <div id="results"></div>
+
+  <p class="small">
+    The image is processed in memory and is not saved by this app. The model was trained on the
+    HAM10000 dataset (dermatoscopic images) and works poorly on ordinary phone photos.
+  </p>
+
+  <script>
+    const fileInput = document.getElementById("file");
+    const goButton = document.getElementById("go");
+    const preview = document.getElementById("preview");
+    const statusEl = document.getElementById("status");
+    const errorEl = document.getElementById("error");
+    const resultsEl = document.getElementById("results");
+
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files[0];
+      resultsEl.textContent = "";
+      errorEl.textContent = "";
+      if (!file) { preview.style.display = "none"; return; }
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = "block";
+    });
+
+    goButton.addEventListener("click", async () => {
+      const file = fileInput.files[0];
+      errorEl.textContent = "";
+      resultsEl.textContent = "";
+      if (!file) { errorEl.textContent = "Choose an image first."; return; }
+
+      const form = new FormData();
+      form.append("file", file);
+      goButton.disabled = true;
+      statusEl.textContent = "Analyzing...";
+
+      try {
+        const res = await fetch("/predict", { method: "POST", body: form });
+        const data = await res.json();
+        if (!res.ok) { throw new Error(data.detail || "Request failed."); }
+        render(data);
+      } catch (err) {
+        errorEl.textContent = err.message;
+      } finally {
+        goButton.disabled = false;
+        statusEl.textContent = "";
+      }
+    });
+
+    function render(data) {
+      const top = document.createElement("div");
+      top.className = "top";
+      top.textContent = data.prediction_name + " (" + (data.confidence * 100).toFixed(1) + "%)";
+      resultsEl.appendChild(top);
+
+      const entries = Object.entries(data.probabilities).sort((a, b) => b[1] - a[1]);
+      for (const [code, p] of entries) {
+        const row = document.createElement("div");
+        row.className = "bar-row";
+
+        const label = document.createElement("span");
+        label.textContent = code;
+
+        const track = document.createElement("div");
+        track.className = "bar-track";
+        const fill = document.createElement("div");
+        fill.className = "bar-fill";
+        fill.style.width = (p * 100).toFixed(1) + "%";
+        track.appendChild(fill);
+
+        const pct = document.createElement("span");
+        pct.textContent = (p * 100).toFixed(1) + "%";
+
+        row.append(label, track, pct);
+        resultsEl.appendChild(row);
+      }
+
+      const note = document.createElement("p");
+      note.className = "small";
+      note.textContent = data.disclaimer;
+      resultsEl.appendChild(note);
+    }
+  </script>
+</body>
+</html>
