@@ -65,4 +65,4 @@ Model weights and data are not stored in this repository.
 
 ## Status
 
-Local API and upload page work. Docker and AWS deployment are in progress.
+Local API and upload page work. Next step: Docker.
