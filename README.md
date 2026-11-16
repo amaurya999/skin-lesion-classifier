@@ -56,6 +56,17 @@ Melanoma recall is 0.68 and basal cell carcinoma recall is 0.56. The best epoch 
 
 Model weights and data are not stored in this repository.
 
+## Run with Docker
+
+Place the fine-tuned checkpoint at `outputs/checkpoints/best_finetuned.pt`, then:
+
+```
+docker build -t skin-lesion-api .
+docker run --rm -p 8000:8000 skin-lesion-api
+```
+
+Open http://127.0.0.1:8000/ in a browser.
+
 ## Limitations
 
 - Trained on dermatoscopic images; it performs poorly on ordinary phone photos.
@@ -65,4 +76,4 @@ Model weights and data are not stored in this repository.
 
 ## Status
 
-Local API and upload page work. Next steps: Docker, then AWS deployment.
+Docker works and AWS deployment is next

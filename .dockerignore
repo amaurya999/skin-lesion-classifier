@@ -1,0 +1,10 @@
+vlm_venv/
+data/
+.git/
+.gitignore
+__pycache__/
+*.pyc
+notebooks/
+outputs/*.json
+outputs/*.txt
+outputs/checkpoints/best_model.pt
